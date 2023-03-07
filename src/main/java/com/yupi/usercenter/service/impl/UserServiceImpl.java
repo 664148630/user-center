@@ -1,6 +1,5 @@
 package com.yupi.usercenter.service.impl;
 
-
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
@@ -65,18 +64,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) { //（如果userAccount有包含特殊字符，他能跟validPattern匹配，如果找不到，就跳过判断）
-            return -1;//如果发现了特殊字符，则返回-1
+//            return -1;//如果发现了特殊字符，则返回-1
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号不能包含特殊字符");
         }
         //密码和检验密码相同
         if (!userPassword.equals(checkPassword)) {
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
         //账号不能重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount", userAccount);
         long count = this.count(queryWrapper);
         if (count > 0) {
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
         }
 
         //2、加密
@@ -89,7 +91,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         boolean saveResult = this.save(user);
         //实体类定义的id是包装类（Long），而方法定义的返回值id是long，在拆箱的过程中有可能返回的是null，所以这里判断一下可能会出错。
         if (!saveResult) { //如果保存失败，就返回-1
-            return -1;
+//            return -1;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "用户注册失败");
         }
         return user.getId();
     }
@@ -99,19 +102,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         //1、校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号密码不能为空（空格或空值）");
         }
         if (userAccount.length() < 4) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号不能小于四位");
         }
         if (userPassword.length() < 8) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码不能小于八位");
         }
         //账号不能包含特殊字符
         String validPattern = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (matcher.find()) { //（如果userAccount有包含特殊字符，他能跟validPattern匹配，如果找不到，就跳过判断）
-            return null;//如果发现了特殊字符，则返回null
+//            return null;//如果发现了特殊字符，则返回null
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号不能包含特殊字符");
         }
         //2. 校验密码是否输入正确，要和数据库中的密文密码去对比
         //加密
@@ -124,7 +131,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         //判断用户不存在的可能，也就是查不到的可能
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户登录失败，账号密码不匹配");
         }
         //3. 用户信息脱敏，隐藏敏感信息，防止数据库中的字段泄露
         User safetyUser = getSafetyUser(user);

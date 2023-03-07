@@ -19,8 +19,6 @@ import com.yupi.usercenter.service.IUserService;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,13 +44,14 @@ public class UserController {
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
 //            return ResultUtils.error(ErrorCode.PARAMS_ERROR);
-            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入要注册的账号密码");
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "注册的账号密码不能包含空格或空值");
         }
         long userRegister = userService.userRegister(userAccount, userPassword, checkPassword);
         return ResultUtils.success(userRegister);
@@ -62,12 +61,14 @@ public class UserController {
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请输入要登录的账号密码");
         }
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "登录的账号密码不能包含空格或空值");
         }
         User user = userService.userLogin(userAccount, userPassword, request);
         return ResultUtils.success(user);
@@ -77,7 +78,8 @@ public class UserController {
     @PostMapping("/logout")
     public BaseResponse<Integer> userLogout(HttpServletRequest request) {
         if (request == null) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.NULL_ERROR, "request请求数据为null");
         }
         int userLogout = userService.userLogout(request);
         return ResultUtils.success(userLogout);
@@ -135,11 +137,13 @@ public class UserController {
     public BaseResponse<Boolean> deleteUser(@RequestBody long id, HttpServletRequest request) {
         //鉴权；仅管理员可查询
         if (!isAdmin(request)) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.NOT_AUTH);
         }
 
         if (id <= 0) {
-            return null;
+//            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean removeById = userService.removeById(id);
         return ResultUtils.success(removeById);
